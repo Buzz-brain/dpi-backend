@@ -20,7 +20,11 @@ import ninInfoRoutes from './routes/nininfo.routes.js';
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:8080';
+app.use(cors({
+	origin: allowedOrigin,
+	credentials: true
+}));
 app.use(express.json());
 app.use(morgan('dev'));
 
