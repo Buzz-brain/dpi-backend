@@ -1,0 +1,17 @@
+import mongoose from 'mongoose';
+
+const { Schema } = mongoose;
+
+const TransactionSchema = new Schema({
+  from: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  to: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  type: { type: String, enum: ['credit', 'debit', 'withdrawal'], required: true },
+  amount: { type: Number, required: true },
+  description: { type: String },
+  reference: { type: String, unique: true, required: true },
+  status: { type: String, enum: ['pending', 'completed', 'failed'], default: 'completed' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+export default mongoose.model('Transaction', TransactionSchema);
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
