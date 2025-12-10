@@ -16,7 +16,14 @@ export async function register(req, res) {
     const allowedRoles = ['admin', 'agent', 'citizen'];
     const userRole = allowedRoles.includes(role) ? role : 'citizen';
 
-    if (userRole === 'citizen' && !nin) return res.status(400).json({ message: 'NIN is required for citizens' });
+
+    if (userRole === 'citizen') {
+      if (!nin) return res.status(400).json({ message: 'NIN is required for citizens' });
+      // Fetch NIN info and ensure it is verified
+      const ninInfo = await NinInfo.findOne({ nin });
+      if (!ninInfo) return res.status(404).json({ message: 'NIN Invalid' });
+      if (!ninInfo.isVerified) return res.status(403).json({ message: 'NIN must be verified before registration' });
+    }
 
     const existing = await User.findOne({ $or: [{ username }, { nin }] });
     if (existing) return res.status(409).json({ message: 'Username or NIN already exists' });
@@ -24,15 +31,12 @@ export async function register(req, res) {
     let userData = { username, password: await bcrypt.hash(password, 10), role: userRole };
 
     if (userRole === 'citizen') {
-      // Fetch NIN info
+      // Link by reference; do not copy demographic/contact fields into User
       const ninInfo = await NinInfo.findOne({ nin });
-      if (!ninInfo) return res.status(404).json({ message: 'NIN Invalid' });
       userData = {
         ...userData,
-        fullName: ninInfo.fullName,
         nin,
-        phone: ninInfo.phone,
-        email: ninInfo.email
+        ninInfo: ninInfo._id
       };
     }
 
@@ -44,8 +48,24 @@ export async function register(req, res) {
       logger.error('Failed to create wallet for user', err);
     }
 
+    // Build a response user object that includes ninInfo fields for client convenience
+    let responseNinInfo = null;
+    if (user.ninInfo) responseNinInfo = await NinInfo.findById(user.ninInfo).select('-__v');
+    else if (user.nin) responseNinInfo = await NinInfo.findOne({ nin: user.nin }).select('-_id -__v');
+
+    const responseUser = {
+      id: user._id,
+      username: user.username,
+      fullName: responseNinInfo ? responseNinInfo.fullName : undefined,
+      nin: user.nin,
+      role: user.role,
+      email: responseNinInfo ? responseNinInfo.email : undefined,
+      phone: responseNinInfo ? responseNinInfo.phone : undefined,
+      ninInfo: user.ninInfo || null
+    };
+
     const token = generateToken(user);
-    res.status(201).json({ user: { id: user._id, username: user.username, fullName: user.fullName, nin: user.nin, role: user.role }, token });
+    res.status(201).json({ user: responseUser, token });
   } catch (err) {
     logger.error('Register error', err);
     res.status(500).json({ message: 'Server error' });
@@ -61,8 +81,24 @@ export async function login(req, res) {
     if (!user || !user.password) return res.status(401).json({ message: 'Invalid credentials' });
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ message: 'Invalid credentials' });
+    // Include ninInfo fields in response for client convenience
+    let responseNinInfo = null;
+    if (user.ninInfo) responseNinInfo = await NinInfo.findById(user.ninInfo).select('-__v');
+    else if (user.nin) responseNinInfo = await NinInfo.findOne({ nin: user.nin }).select('-_id -__v');
+
+    const responseUser = {
+      id: user._id,
+      username: user.username,
+      fullName: responseNinInfo ? responseNinInfo.fullName : undefined,
+      nin: user.nin,
+      role: user.role,
+      email: responseNinInfo ? responseNinInfo.email : undefined,
+      phone: responseNinInfo ? responseNinInfo.phone : undefined,
+      ninInfo: user.ninInfo || null
+    };
+
     const token = generateToken(user);
-    res.json({ user: { id: user._id, username: user.username, fullName: user.fullName, nin: user.nin, role: user.role }, token });
+    res.json({ user: responseUser, token });
   } catch (err) {
     logger.error('Login error', err);
     res.status(500).json({ message: 'Server error' });
@@ -114,9 +150,11 @@ export async function me(req, res) {
 
     const wallet = await Wallet.findOne({ user: user._id }).select('-__v');
 
-    // Optionally include NIN info if available
+    // Optionally include NIN info if available (prefer linked document)
     let ninInfo = null;
-    if (user.nin) {
+    if (user.ninInfo) {
+      ninInfo = await NinInfo.findById(user.ninInfo).select('-__v');
+    } else if (user.nin) {
       ninInfo = await NinInfo.findOne({ nin: user.nin }).select('-_id -__v');
     }
 

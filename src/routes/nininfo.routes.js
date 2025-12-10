@@ -4,6 +4,7 @@ import { requireAdmin } from '../middlewares/admin.middleware.js';
 import {
   createNinInfo,
   getNinInfo,
+  listNinInfos,
   updateNinInfo,
   deleteNinInfo
 } from '../controllers/nininfo.controller.js';
@@ -11,6 +12,7 @@ import {
 const router = express.Router();
 
 router.post('/', protect, requireAdmin, createNinInfo);
+router.get('/', protect, requireAdmin, listNinInfos);
 router.get('/:nin', getNinInfo);
 router.put('/:nin', protect, requireAdmin, updateNinInfo);
 router.delete('/:nin', protect, requireAdmin, deleteNinInfo);

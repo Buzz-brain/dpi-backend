@@ -11,5 +11,5 @@ Quick start:
 Endpoints added in this phase:
 - POST /api/auth/register  (creates user + wallet)
 - POST /api/auth/login
-- GET /api/wallets/:userId  (requires Authorization: Bearer <token>)
-- POST /api/wallets/:userId/topup  (admin only)
+- GET /api/wallet/:userId  (requires Authorization: Bearer <token>)
+- POST /api/wallet/:userId/topup  (admin only)

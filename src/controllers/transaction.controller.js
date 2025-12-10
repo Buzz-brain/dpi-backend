@@ -60,8 +60,8 @@ export async function sendTransaction(req, res) {
         // Create two transactions: sender (debit), receiver (credit)
         const senderRef = generateReference('DEB');
         const receiverRef = generateReference('CRD');
-        const senderDesc = value.description || `Transfer to ${toUser.fullName || toUser.username || toUser.nin}`;
-        const receiverDesc = value.description || `Transfer from ${req.user.fullName || req.user.username || ''}`;
+        const senderDesc = value.description || `Transfer to ${toUser.username || toUser.nin}`;
+        const receiverDesc = value.description || `Transfer from ${req.user.username || ''}`;
 
         const [debitTx, creditTx] = await Promise.all([
           Transaction.create([{
@@ -158,7 +158,9 @@ export async function getTransactions(req, res) {
       description: tx.description || '',
       date: tx.createdAt,
       status: tx.status,
-      reference: tx.reference
+      reference: tx.reference,
+      from: tx.from,
+      to: tx.to
     }));
     res.json({ transactions: mapped });
   } catch (err) {

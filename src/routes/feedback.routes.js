@@ -5,12 +5,14 @@ import {
   createFeedback,
   getFeedbacks,
   getFeedback,
+  getMyFeedbacks,
   updateFeedback,
   deleteFeedback
 } from '../controllers/feedback.controller.js';
 
 const router = express.Router();
 
+router.get('/mine', protect, getMyFeedbacks);
 router.get('/', protect, requireAdmin, getFeedbacks);
 router.get('/:id', protect, requireAdmin, getFeedback);
 router.post('/', protect, createFeedback);

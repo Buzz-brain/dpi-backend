@@ -12,8 +12,8 @@ import {
 
 const router = express.Router();
 
-router.get('/', getPolls);
-router.get('/:id', getPoll);
+router.get("/", protect, getPolls);
+router.get("/:id", protect, getPoll);
 router.post('/', protect, requireAdmin, createPoll);
 router.post('/:id/vote', protect, votePoll);
 router.put('/:id', protect, requireAdmin, updatePoll);

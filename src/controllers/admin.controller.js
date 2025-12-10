@@ -39,8 +39,30 @@ export async function getPayouts(req, res) {
 
 export async function getBeneficiaries(req, res) {
   try {
-    // For now, all users with role 'citizen' and verifiedNIN
-    const users = await User.find({ role: 'citizen', verifiedNIN: true });
+    // Return citizen users with wallet aggregates (balance, totalReceived, totalWithdrawn)
+    const users = await User.aggregate([
+      { $match: { role: 'citizen', verifiedNIN: true } },
+      { $lookup: { from: 'wallets', localField: '_id', foreignField: 'user', as: 'wallet' } },
+      { $unwind: { path: '$wallet', preserveNullAndEmptyArrays: true } },
+      { $addFields: {
+        balance: { $ifNull: ['$wallet.balance', 0] },
+        totalReceived: {
+          $reduce: {
+            input: { $filter: { input: { $ifNull: ['$wallet.ledger', []] }, as: 'l', cond: { $eq: ['$$l.type', 'credit'] } } },
+            initialValue: 0,
+            in: { $add: ['$$value', { $ifNull: ['$$this.amount', 0] }] }
+          }
+        },
+        totalWithdrawn: {
+          $reduce: {
+            input: { $filter: { input: { $ifNull: ['$wallet.ledger', []] }, as: 'l', cond: { $eq: ['$$l.type', 'debit'] } } },
+            initialValue: 0,
+            in: { $add: ['$$value', { $ifNull: ['$$this.amount', 0] }] }
+          }
+        }
+      } },
+      { $project: { wallet: 0 } }
+    ]);
     res.json(users);
   } catch (err) {
     logger.error('Admin get beneficiaries error', err);
@@ -60,7 +82,29 @@ export async function disbursePayouts(req, res) {
 
 export async function getAllUsers(req, res) {
   try {
-    const users = await User.find();
+    const users = await User.aggregate([
+      { $match: {} },
+      { $lookup: { from: 'wallets', localField: '_id', foreignField: 'user', as: 'wallet' } },
+      { $unwind: { path: '$wallet', preserveNullAndEmptyArrays: true } },
+      { $addFields: {
+        balance: { $ifNull: ['$wallet.balance', 0] },
+        totalReceived: {
+          $reduce: {
+            input: { $filter: { input: { $ifNull: ['$wallet.ledger', []] }, as: 'l', cond: { $eq: ['$$l.type', 'credit'] } } },
+            initialValue: 0,
+            in: { $add: ['$$value', { $ifNull: ['$$this.amount', 0] }] }
+          }
+        },
+        totalWithdrawn: {
+          $reduce: {
+            input: { $filter: { input: { $ifNull: ['$wallet.ledger', []] }, as: 'l', cond: { $eq: ['$$l.type', 'debit'] } } },
+            initialValue: 0,
+            in: { $add: ['$$value', { $ifNull: ['$$this.amount', 0] }] }
+          }
+        }
+      } },
+      { $project: { wallet: 0 } }
+    ]);
     res.json(users);
   } catch (err) {
     logger.error('Get all users error', err);
