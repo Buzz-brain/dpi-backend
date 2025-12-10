@@ -1,0 +1,257 @@
+Digital Payment Initiative (DPI) — Project Report
+
+Abstract / Executive Summary
+
+This document presents a comprehensive technical and functional overview of the Digital Payment Initiative (DPI) prototype. DPI is a web-based platform built to enable secure, accessible digital financial services for rural and underserved communities in Nigeria. It integrates a React + TypeScript frontend with an Express + Node.js backend, backed by MongoDB. The prototype supports core features such as account registration via NIN (National Identity Number), wallet management, sending money, withdrawals, government disbursements, polls, announcements, and user feedback. The system emphasizes accessibility (multi-language interface and text-to-speech), security (password hashing, JWT authentication, rate limiting, input validation), and operational robustness (transactional withdrawal workflow with rollback behavior on failures).
+
+Problem Statement and Objectives
+
+Problem Statement
+- Many rural users are excluded from conventional digital payment systems due to language barriers, lack of accessible interfaces, and limited local infrastructure integration. Government disbursements and financial assistance programs require a secure channel to reach beneficiaries with identity verification.
+
+Primary Objectives
+- Provide an easy-to-use, multilingual web platform to deliver digital payments and government disbursements.
+- Authenticate users using the National Identity Number (NIN) with a verified record (NinInfo) and allow administrators to verify records.
+- Offer wallet management, peer-to-peer transfers, withdrawal requests, and transaction histories.
+- Improve accessibility with multi-language translations and text-to-speech.
+- Ensure transactional integrity when money moves or is disbursed and handle errors gracefully (e.g., rollback when email fails).
+
+System Requirements (Hardware / Software)
+
+Minimum Hardware
+- Client: Any modern device capable of running a standards-compliant browser (Chrome, Edge, Firefox). A smartphone is sufficient for the responsive frontend.
+- Server: 1 vCPU, 1–2 GB RAM (development/test). For production scale, use 2+ vCPU and 4+ GB RAM and horizontally scale as needed.
+
+Software Requirements
+- Backend: Node.js >= 18, npm or yarn, MongoDB (v5+ recommended)
+- Frontend: Node.js for development (Vite), modern browser for clients
+- Optional Integrations: SMTP server credentials for email (Nodemailer), Paystack API credentials for payment/disbursement integration (see `src/config/paystack.js`)
+
+Tools and Technologies Used
+
+Backend
+- Node.js, Express: REST API server (`src/server.js`, `src/app.js`)
+- MongoDB + Mongoose: data persistence (models in `src/models/`)
+- bcrypt: password hashing
+- jsonwebtoken: JWT-based authentication (helpers in `src/utils/generateToken.js`)
+- nodemailer: SMTP email integration (`src/utils/mailer.js`) with dev fallback
+- Joi: input validation
+- helmet, express-rate-limit: security hardening
+- pino / morgan: logging (`src/utils/logger.js`)
+
+Frontend
+- React (TypeScript), Vite: Single Page Application (`frontend/`)
+- Tailwind CSS, shadcn UI primitives: design system and components
+- react-i18next: internationalization (`frontend/src/i18n/config.ts`) with English, Hausa, Yoruba, Igbo
+- zustand: lightweight state management (`frontend/src/store/authStore.ts`) for auth/wallet state
+- react-query (@tanstack/react-query): cache and server state management
+- Sonner, Radix UI components: toasts and UI primitives
+- Web Speech API (custom `TextToSpeechButton` and `speakText` util): text-to-speech accessibility
+
+Development / Testing
+- Jest, Supertest for backend tests (devDependencies)
+- Nodemon for local server dev experience
+
+System Architecture (Frontend + Backend Explanation)
+
+Overview
+- DPI follows a typical SPA + REST architecture. The frontend is a single-page React application communicating with an Express REST API backend. The backend persists data in MongoDB and handles authentication, business logic, and external integrations (email, Paystack).
+
+Frontend
+- Entry point: Vite dev server; compiled to static assets for production.
+- State: `zustand` stores authentication and lightweight profile/wallet state; `react-query` manages server-synced data such as transactions, polls, announcements.
+- UI: Reusable UI primitives (Card, Button, Input, Dialog, etc.). Translations stored centrally in `frontend/src/i18n/config.ts`.
+- Accessibility features: text-to-speech component (`frontend/src/components/TextToSpeechButton.tsx`), and automatic speech reads for toasts via `frontend/src/utils/speakText.ts`.
+
+Backend
+- Express app is structured around routes and controllers: `src/routes/*.js` and `src/controllers/*.js`.
+- Models are defined with Mongoose under `src/models/`, e.g., `User.js`, `Wallet.js`, `Transaction.js`, `Withdrawal.js`, `NinInfo.js`, `Announcement.js`, `Poll.js`, `Feedback.js`, etc.
+- Middleware: `auth.middleware.js` and `admin.middleware.js` secure endpoints and enforce role-based access.
+- Email and notification utility: `src/utils/mailer.js` attempts SMTP send; if the SMTP environment is missing, falls back to safe logging for development.
+
+Data Flow Description
+
+Typical send-money flow (frontend → backend → DB):
+1. User (client) fills SendMoney form and submits.
+2. Frontend validates input and calls POST /api/transactions/send (see `src/routes/transaction.routes.js`).
+3. Backend controller (`src/controllers/transaction.controller.js`) validates, creates a Transaction record, updates wallets, and returns a response. Frontend updates cache and zustand state.
+
+Withdrawal flow (special transactional behavior):
+1. User requests withdrawal (POST /api/withdrawals).
+2. Backend (`src/controllers/withdrawal.controller.js`) starts multi-step operation: deduct wallet, create Transaction, create Withdrawal record.
+3. Backend sends confirmation email using `src/utils/mailer.js`.
+4. If email sending fails, the controller rolls back previously made changes (restores wallet and removes created records) to maintain consistency.
+
+NIN registration and verification:
+- The frontend provides a `NinRegisterModal` to register a NIN record. Admins verify NINs; `NinInfo` model stores full name, phone, email, isVerified flag. User creation depends on verified NIN record.
+
+Key Features
+
+- Account Management: Sign-up (registered against verified NIN), login (NIN or username), profile editing.
+- Wallet: balance display, ledger entries, react-query-backed updates.
+- Send Money: validate recipient by NIN, transfer funds, refresh wallet and transactions cache.
+- Withdrawals: create withdrawal requests, transactional processing with rollback if email fails.
+- Transactions: view history, filters, exportable reports (PDF via jsPDF available on frontend), transaction details.
+- Announcements: publish and view announcements; each announcement supports text-to-speech playback.
+- Polls: create and vote in polls; optimistic updates and read-aloud of poll content.
+- Feedback: submit and view feedback with admin responses.
+- Admin: disbursements (bulk/individual), manage users and NIN verification, view disbursement history.
+- Accessibility: Text-to-speech for critical notifications and content; keyboard-accessible UI primitives.
+- Internationalization: Multi-language support (English, Hausa, Yoruba, Igbo) with central translation resource.
+
+Screens Overview (Main Modules)
+
+- Landing: Intro, CTA, statistics, multi-language selection.
+- Login / Register: Authentication and NIN-linked registration.
+- Dashboard: Wallet balance, quick actions (Send, Withdraw), recent transactions.
+- Send Money: Recipient lookup (NIN), amount, description, confirm large transfers.
+- Withdraw: Withdrawal request (bank details), confirmation dialog.
+- Transactions: Filterable transaction ledger, search, status badges.
+- Polls: Active and closed polls, vote UI, results with progress bars.
+- Announcements: List and detail dialog; each announcement has TTS.
+- Feedback: Submit and view feedback history.
+- Admin Console: Disbursements management, NIN verification, user management (routes/controllers in `src/routes/admin.routes.js`, `src/controllers/admin.controller.js`).
+
+API Overview (Sample Endpoints)
+
+Note: route files are in `src/routes/*.js`. Representative endpoints include:
+
+Authentication & User
+- POST /api/auth/login — Authenticate user (NIN or username) and return JWT
+- POST /api/auth/register — Register new user (depends on NIN verification)
+- POST /api/auth/logout — Revoke token / blacklisting
+- GET /api/users/:id — Get user profile
+
+Wallet & Transactions
+- GET /api/wallet/:userId — Fetch user wallet
+- POST /api/transactions/send — Send money to recipient (validated by NIN)
+- GET /api/transactions — List user transactions
+
+Withdrawals
+- POST /api/withdrawals — Create withdrawal request (controller handles email + rollback)
+- GET /api/withdrawals — Admin: list withdrawals
+
+NIN & Identity
+- GET /api/nininfo/:nin — Fetch NIN record (NinInfo)
+- POST /api/nininfo — Create NIN record (NinRegisterModal)
+
+Announcements & Polls
+- GET /api/announcements — List announcements
+- POST /api/announcements — Admin: create announcement
+- GET /api/polls — List polls
+- POST /api/polls/:id/vote — Submit vote for poll
+
+Feedback
+- POST /api/feedback — Submit user feedback
+- GET /api/feedback — User: list feedback history
+
+Admin / Disbursements
+- POST /api/disbursements — Create disbursement (admin)
+- GET /api/disbursements — List disbursements
+
+Security & Privacy Implementation
+
+Authentication and Authorization
+- JWT-based authentication with token creation helper in `src/utils/generateToken.js`.
+- Role-based middleware (`src/middlewares/admin.middleware.js` and `src/middlewares/auth.middleware.js`) that protect admin-only and authenticated routes.
+- Blacklisted tokens model (`src/models/BlacklistedToken.js`) allows token revocation for logout flows.
+
+Input Validation
+- Joi validation for incoming payloads at controller level (where applicable) to prevent malformed data.
+
+Transport and Headers
+- `helmet` used to set secure HTTP headers.
+- `cors` configured for cross-origin policies (see `src/app.js`).
+- `express-rate-limit` applied to reduce brute-force and DOS risk.
+
+Data Protection
+- Passwords hashed with bcrypt.
+- Sensitive operations (withdrawals) are transactional and require confirmation.
+- Email content is queued and sent via SMTP when configured; mailer logs in development when SMTP not present.
+
+Privacy Considerations
+- NIN and personal data are stored in `NinInfo` and `User` models. The system is designed to minimize exposure by only storing what's necessary and flagging verified data.
+- Logging should avoid writing sensitive PII to public logs in production.
+
+Accessibility & Internationalization
+
+Internationalization
+- All user-facing strings are centralized in `frontend/src/i18n/config.ts` and translated for English, Hausa, Yoruba, and Igbo.
+- The frontend includes a language selector in the `Navbar` allowing users to switch languages in the client session. Language persistence is a recommended enhancement (e.g., storing preference in localStorage / user profile).
+
+Accessibility
+- Text-to-speech: `frontend/src/components/TextToSpeechButton.tsx` plus `frontend/src/utils/speakText.ts` enable both manual (button) and automatic (toast-read) speech playback in the user’s selected language.
+- UI focuses on readable layouts (semantic labels, form labels). Additional a11y improvements are recommended (focus-visible styles, ARIA attributes, high-contrast themes).
+
+Challenges & Limitations (Prototype Phase)
+
+- Email dependence: The withdrawal flow requires email confirmation; if SMTP is misconfigured, the mailer behavior differs between dev (log fallback) and production (failure). The rollback behavior mitigates some risk but complicates operations.
+- NIN verification: Admin verification is manual within the prototype. This step is a bottleneck for mass onboarding and requires policy and process work to automate or delegate.
+- Tests & CI: Unit and integration tests exist for some parts (Jest, Supertest), but full coverage and CI pipelines are not yet complete.
+- Internationalization scope: Many UI pages have been internationalized, but some text strings or email templates may still be in English and require translation.
+- Accessibility: Text-to-speech is implemented for many notifications and content pieces, but complete WCAG conformance has not been formally audited.
+- Performance & Scaling: The current application is prototype-grade and may require performance tuning, request queuing, or migration to managed DB services for production.
+
+Future Enhancements
+
+Suggested roadmap items for maturation to production:
+1. Language Preference Persistence: Save user language choice to localStorage and user profile.
+2. Email Templates & i18n: Localize email templates and use transactional email service (SendGrid, SES) with retries and monitoring.
+3. Improved Auditing: Add immutable audit logs for critical financial events and admin actions.
+4. Rate-Limited Transaction Queues: Use background queues (e.g., BullMQ) for heavy operations (bulk disbursements).
+5. Automated NIN Verification: Integrate government NIN verification APIs where available to reduce admin workload.
+6. Mobile App & Offline Support: Build a React Native app or PWA for low-connectivity regions with sync logic.
+7. End-to-End Tests & CI/CD: Add comprehensive testing and GitHub Actions or equivalent for automated builds and deployments.
+8. Monitoring & Alerts: Integrate APM (Datadog/NewRelic) and error tracking (Sentry) for observability.
+9. Role-Based UI: Advanced admin dashboards for disbursement scheduling, reconciliation, and reporting.
+10. Security Review & Penetration Testing: Formal security assessment before production rollout.
+
+Conclusion
+
+The Digital Payment Initiative prototype demonstrates a practical and thoughtful approach to enabling digital financial inclusion through a multilingual, accessible web application. The system design balances core functionality (wallets, transactions, withdrawals) with robust operational concerns (security hardening, rollback patterns), and user-centric features (NIN verification, announcements, polls). While the prototype has limitations typical of early-stage systems, it provides a strong foundation for further development toward a production-ready platform.
+
+References (Selected Libraries and Standards)
+
+- Node.js, Express, MongoDB, Mongoose
+- React, TypeScript, Vite, Tailwind CSS
+- react-i18next for translations
+- Web Speech API for client-side text-to-speech
+- OWASP recommendations for web application security (Helmet, rate limiting)
+- Paystack (integration config at `src/config/paystack.js`)
+
+Appendix: Notable Files and Locations
+
+Backend
+- Entry points: `src/app.js`, `src/server.js`
+- Routes: `src/routes/*.js` (auth.routes.js, user.routes.js, transaction.routes.js, wallet.routes.js, withdrawal.routes.js, announcement.routes.js, poll.routes.js, feedback.routes.js, disbursement.routes.js)
+- Controllers: `src/controllers/*.js` (auth, user, transaction, wallet, withdrawal, poll, announcement, feedback, disbursement)
+- Utilities: `src/utils/mailer.js`, `src/utils/generateToken.js`, `src/utils/logger.js`
+- Models: `src/models/*.js` (User.js, Wallet.js, Transaction.js, Withdrawal.js, NinInfo.js, Announcement.js, Poll.js, Feedback.js, Disbursement.js, BlacklistedToken.js)
+
+Frontend
+- Root: `frontend/` (Vite + React + TypeScript)
+- i18n configuration: `frontend/src/i18n/config.ts` (en, ha, yo, ig)
+- State: `frontend/src/store/authStore.ts` (Zustand auth + wallet)
+- Components: `frontend/src/components/` (NinRegisterModal, TextToSpeechButton, layout components like Navbar.tsx and Footer.tsx)
+- Pages: `frontend/src/pages/` (Dashboard.tsx, SendMoney.tsx, Withdraw.tsx, Transactions.tsx, Polls.tsx, Announcements.tsx, Login.tsx, Register.tsx, Feedback.tsx)
+- Utilities: `frontend/src/utils/speakText.ts`, `frontend/src/utils/numberToWords.ts`
+
+How to run (development)
+1. Backend
+   - Install dependencies: `npm install`
+   - Start server (dev): `npm run dev` (runs `nodemon src/server.js`)
+   - Ensure MongoDB is running and `.env` contains necessary values (MONGO_URI, JWT_SECRET, SMTP_* for email if needed)
+
+2. Frontend
+   - Install dependencies: `cd frontend && npm install`
+   - Start dev server: `npm run dev` (Vite)
+
+Notes on verification
+- Run the frontend and backend locally, register a user, upload or register NIN, and test sending/withdrawal flows.
+- Monitor server logs for mailer behavior and ensure SMTP is configured for end-to-end email sends.
+
+Contact & Contributors
+- Primary repository: Local workspace — `c:\Users\Buzz brain\OneDrive - Federal University of Technology, Owerri\Desktop\dpi-ng`
+- Contributors: Project lead / developer (local repo author). For formal submission, include team and supervisor names in a cover page if required.
+
+--- End of Report
