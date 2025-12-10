@@ -4,24 +4,24 @@ import Joi from 'joi';
 
 export async function createNinInfo(req, res) {
   try {
-    const schema = Joi.object({
-      nin: Joi.string().min(5).max(20).required(),
-      fullName: Joi.string().min(3).max(200).required(),
-      email: Joi.string().email().required(),
-      phone: Joi.string().min(7).max(20).required(),
-      state: Joi.string().optional().allow(''),
-      region: Joi.string().optional().allow(''),
-      occupation: Joi.string().optional().allow(''),
-      gender: Joi.string().valid('male', 'female', 'other').optional(),
-      dob: Joi.date().iso().optional(),
-      address: Joi.string().optional().allow(''),
-      lga: Joi.string().optional().allow(''),
-      tribe: Joi.string().optional().allow('')
-    });
+    // const schema = Joi.object({
+    //   nin: Joi.string().min(5).max(20).required(),
+    //   fullName: Joi.string().min(3).max(200).required(),
+    //   email: Joi.string().email().required(),
+    //   phone: Joi.string().min(7).max(20).required(),
+    //   state: Joi.string().optional().allow(''),
+    //   region: Joi.string().optional().allow(''),
+    //   occupation: Joi.string().optional().allow(''),
+    //   gender: Joi.string().valid('male', 'female', 'other').optional(),
+    //   dob: Joi.date().iso().optional(),
+    //   address: Joi.string().optional().allow(''),
+    //   lga: Joi.string().optional().allow(''),
+    //   tribe: Joi.string().optional().allow('')
+    // });
 
-    const { error, value } = schema.validate(req.body, { stripUnknown: true });
-    if (error) return res.status(400).json({ message: error.details[0].message });
-    const { nin, fullName, email, phone, state, region, occupation, gender, dob, address, lga, tribe } = value;
+    // const { error, value } = schema.validate(req.body, { stripUnknown: true });
+    // if (error) return res.status(400).json({ message: error.details[0].message });
+    const { nin, fullName, email, phone, state, region, occupation, gender, dob, address, lga, tribe } = req.body;
     const existing = await NinInfo.findOne({ nin });
     if (existing) return res.status(409).json({ message: 'NIN already exists' });
     const ninInfo = await NinInfo.create({ nin, fullName, email, phone, state, region, occupation, gender, dob, address, lga, tribe });
