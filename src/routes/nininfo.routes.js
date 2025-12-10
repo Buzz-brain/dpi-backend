@@ -11,7 +11,7 @@ import {
 
 const router = express.Router();
 
-router.post('/', protect, createNinInfo);
+router.post('/', createNinInfo);
 router.get('/', protect, requireAdmin, listNinInfos);
 router.get('/:nin', getNinInfo);
 router.put('/:nin', protect, requireAdmin, updateNinInfo);
