@@ -1,4 +1,4 @@
-# DPI Backend (JavaScript) - Wallet module bootstrap
+# DigiPayG2C Backend (JavaScript) - Wallet module bootstrap
 
 This is a minimal JavaScript Express backend scaffold with a wallet module.
 

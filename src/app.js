@@ -45,6 +45,8 @@ app.use('/api/nininfo', ninInfoRoutes);
 app.use('/api/disbursements', disbursementRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
 
-app.get('/', (req, res) => res.json({ message: 'DPI backend running (JS)' }));
+app.get("/", (req, res) =>
+  res.json({ message: "DigiPayG2C backend running (JS)" })
+);
 
 export default app;

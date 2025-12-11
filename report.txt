@@ -1,8 +1,8 @@
-Digital Payment Initiative (DPI) — Project Report
+Digital Payment Initiative (DigiPayG2C) — Project Report
 
 Abstract / Executive Summary
 
-This document presents a comprehensive technical and functional overview of the Digital Payment Initiative (DPI) prototype. DPI is a web-based platform built to enable secure, accessible digital financial services for rural and underserved communities in Nigeria. It integrates a React + TypeScript frontend with an Express + Node.js backend, backed by MongoDB. The prototype supports core features such as account registration via NIN (National Identity Number), wallet management, sending money, withdrawals, government disbursements, polls, announcements, and user feedback. The system emphasizes accessibility (multi-language interface and text-to-speech), security (password hashing, JWT authentication, rate limiting, input validation), and operational robustness (transactional withdrawal workflow with rollback behavior on failures).
+This document presents a comprehensive technical and functional overview of the Digital Payment Initiative (DigiPayG2C) prototype. DigiPayG2C is a web-based platform built to enable secure, accessible digital financial services for rural and underserved communities in Nigeria. It integrates a React + TypeScript frontend with an Express + Node.js backend, backed by MongoDB. The prototype supports core features such as account registration via NIN (National Identity Number), wallet management, sending money, withdrawals, government disbursements, polls, announcements, and user feedback. The system emphasizes accessibility (multi-language interface and text-to-speech), security (password hashing, JWT authentication, rate limiting, input validation), and operational robustness (transactional withdrawal workflow with rollback behavior on failures).
 
 Problem Statement and Objectives
 
@@ -55,7 +55,7 @@ Development / Testing
 System Architecture (Frontend + Backend Explanation)
 
 Overview
-- DPI follows a typical SPA + REST architecture. The frontend is a single-page React application communicating with an Express REST API backend. The backend persists data in MongoDB and handles authentication, business logic, and external integrations (email, Paystack).
+- DigiPayG2C follows a typical SPA + REST architecture. The frontend is a single-page React application communicating with an Express REST API backend. The backend persists data in MongoDB and handles authentication, business logic, and external integrations (email, Paystack).
 
 Frontend
 - Entry point: Vite dev server; compiled to static assets for production.
@@ -251,7 +251,7 @@ Notes on verification
 - Monitor server logs for mailer behavior and ensure SMTP is configured for end-to-end email sends.
 
 Contact & Contributors
-- Primary repository: Local workspace — `c:\Users\Buzz brain\OneDrive - Federal University of Technology, Owerri\Desktop\dpi-ng`
+- Primary repository: Local workspace — `c:\Users\Buzz brain\OneDrive - Federal University of Technology, Owerri\Desktop\DigiPayG2C-ng`
 - Contributors: Project lead / developer (local repo author). For formal submission, include team and supervisor names in a cover page if required.
 
 --- End of Report

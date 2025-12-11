@@ -5,12 +5,12 @@ import Wallet from '../models/Wallet.js';
 import User from '../models/User.js';
 import logger from '../utils/logger.js';
 
-// Helper to generate a unique reference like DPI-TRF-2025-003
+// Helper to generate a unique reference like DigiPayG2C-TRF-2025-003
 function generateReference(type = 'TRF') {
   const now = new Date();
   const year = now.getFullYear();
   const rand = Math.floor(Math.random() * 9000 + 1000); // 4-digit random
-  return `DPI-${type}-${year}-${rand}`;
+  return `DigiPayG2C-${type}-${year}-${rand}`;
 }
 
 // Frontend sends { recipient: <NIN>, amount, description }

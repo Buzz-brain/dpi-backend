@@ -50,11 +50,17 @@ export function creditAlertTemplate({ fullName, amount, reference, balanceBefore
   const formatted = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount);
   return {
     subject: `Withdrawal processed — ${formatted}`,
-    html: `<p>Hi ${fullName || ''},</p>
+    html: `<p>Hi ${fullName || ""},</p>
       <p>Your withdrawal of <strong>${formatted}</strong> has been processed (ref: <strong>${reference}</strong>).</p>
-      <p>Balance before: ${new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(balanceBefore)}<br/>Balance after: ${new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(balanceAfter)}</p>
+      <p>Balance before: ${new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+      }).format(balanceBefore)}<br/>Balance after: ${new Intl.NumberFormat(
+      "en-NG",
+      { style: "currency", currency: "NGN" }
+    ).format(balanceAfter)}</p>
       <p>If you did not authorize this, contact support immediately.</p>
-      <p>Thanks,<br/>DPI Team</p>`
+      <p>Thanks,<br/>DigiPayG2C Team</p>`,
   };
 }
 
